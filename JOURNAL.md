@@ -15,3 +15,14 @@ The problem is that if the api server restarts while the resume review is runnin
 **Setup confirmation:** [X] App runs locally at localhost:5173
 
 **Cohort ledger:** [X] Issue added to cohort ledger
+
+## Week 8 — Reproduction & solution planning
+
+**Reproduction commit link:** [issue reproduction](https://github.com/hbrown88/pathreview/commit/902ccaadae809871c8326612889c5c049c4c93f7)
+
+**Reproduction summary:**
+To reproduce the issue, I looked at the relevant files and checked for where the persistance happens in the review process. It seems like there may be an issue with the loop that doesn' include everything that is needed. I also ran the test, `tests/unit/test_orchestrator.py::test_partial_progress_survives_a_mid_review_restart`, that runs 3 of 5 planned tool calls and then checks Redis then it comes back empty, proving that a restart mid-review discards all completed work. The test is marked `xfail` since it's expected to fail against the unmodified code.
+
+**PLAN.md link:** [PLAN.md](https://github.com/hbrown88/pathreview/blob/fix/47-agent-state-persistance/PLAN.md)
+
+**Walkthrough video (recommended):** [link to your Loom video, ≤2 min — recommended, not graded]
