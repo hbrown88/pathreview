@@ -32,6 +32,13 @@ class Orchestrator:
     def run(self, profile_id: str, profile_data: dict) -> dict:
         """Execute analysis plan for a profile.
 
+        Resumable across API restarts: any tool that already has a
+        successful result in the persisted session state is reused instead
+        of re-executed, and each tool's result is persisted immediately
+        (not just once at the end), so a review interrupted mid-run picks
+        up where it left off instead of restarting from scratch. Tools
+        whose previous attempt recorded an error are retried, not skipped.
+
         Args:
             profile_id: Profile identifier
             profile_data: Profile data dict with github_username, projects, etc.
@@ -48,24 +55,32 @@ class Orchestrator:
         session_state = {}
         if self.session_store:
             session_state = self.session_store.get(profile_id) or {}
+            logger.info(
+                "session_loaded", profile_id=profile_id, previous_results=len(session_state)
+            )
 
-        # Execute plan
-        results = {}
-        for tool_name, tool_input in plan:  #!!!!!!!IMPORTANT LOOP!!!!!!!!
-            try:
-                result = self._execute_tool(tool_name, tool_input)
-                results[tool_name] = result.data if hasattr(result, "data") else result
+        # Execute plan, resuming any tools already completed successfully
+        results = dict(session_state)
+        for tool_name, tool_input in plan:
+            previous_result = session_state.get(tool_name)
+            if previous_result is not None and not self._is_failed_result(previous_result):
+                logger.info("tool_resumed", tool=tool_name, profile_id=profile_id)
+                results[tool_name] = previous_result
+            else:
+                try:
+                    result = self._execute_tool(tool_name, tool_input)
+                    results[tool_name] = result.data if hasattr(result, "data") else result
 
-                logger.info("tool_executed", tool=tool_name, success=True)
+                    logger.info("tool_executed", tool=tool_name, success=True)
 
-            except Exception as e:
-                logger.error("tool_execution_failed", tool=tool_name, error=str(e))
-                results[tool_name] = {"error": str(e), "success": False}
+                except Exception as e:
+                    logger.error("tool_execution_failed", tool=tool_name, error=str(e))
+                    results[tool_name] = {"error": str(e), "success": False}
 
-        # Persist state
-        if self.session_store:
-            session_state.update(results)
-            self.session_store.set(profile_id, session_state)
+            # Persist after every tool so a mid-review restart loses at
+            # most the tool that was in flight, not everything already done.
+            if self.session_store:
+                self.session_store.set(profile_id, results)
 
         logger.info("orchestrator_complete", profile_id=profile_id, tools_executed=len(results))
 
@@ -74,6 +89,18 @@ class Orchestrator:
             "tool_results": results,
             "cached_results": self.context_manager.get_all_results(),
         }
+
+    @staticmethod
+    def _is_failed_result(result: dict) -> bool:
+        """Check whether a persisted tool result represents a failure.
+
+        Args:
+            result: Previously stored result for a tool from session state
+
+        Returns:
+            True if the result should be retried on resume rather than reused
+        """
+        return isinstance(result, dict) and result.get("success") is False
 
     def _build_plan(self, profile_data: dict) -> list[tuple[str, dict]]:
         """Build execution plan based on available data.
