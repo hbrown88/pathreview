@@ -58,3 +58,35 @@ None on the fix itself. Worth flagging: this shared scaffold has ~130 seeded iss
 *(Unchecked deliberately, not glossed over: neither passes clean repo-wide, but I verified via `git stash` that this PR is responsible for zero regressions — see the PR's "Notes for Reviewers" for the exact before/after counts. `agent/orchestrator.py` and `tests/unit/test_orchestrator.py` are individually clean under `ruff`/`black`/`mypy`, and all 5 orchestrator tests, including the 4 new ones, pass.)*
 
 **Draft PR feedback received from:** none
+
+## Week 10 — Iteration & reflection
+
+### Reviewer feedback
+
+**Feedback received:** [ ] Yes  [X] No — still awaiting review
+
+**Summary of feedback:**
+[What did reviewers comment on? Or note that no review came in.]
+
+**How you responded:**
+[What changes did you make, or what did you reply? If no feedback,
+leave blank.]
+
+---
+
+### Reflection
+
+**What was harder than you expected?**
+The hardest part for me was reproducing the issue and actually locating where it was in the app. Working with claude, it was easy to actually reproduce the issue, but to see and understand what was going on in the backend took me the longest to understand, about 3 hours of work. Also, the fact that this repo was something unfamiliar to me also added to the time to comprehend what I was doing, but overall I'd say it worked out.
+
+**What did you learn about working in a large codebase?**
+To me this was my first time really working on an open source repo that accepts unique pull requests. Understanding that whole process of working among multiple users and how to properly submit a pr across a local repo has been new to me.
+
+**How did AI tools help — and where did they fall short?**
+Definelty for the reproduction of the issue; without AI I don't think I would be able to accurately identify where the exact problem was located. AI also did a good job of listing solutions and explaining how that process would help solve the issue. The one thing AI fell short was actually passing all tasks within the PR request, if I had more time I would've focused on hitting all marks.
+
+**What would you do differently if you started over?**
+I would've maybe selected a lower tier issue that I could've understood better.
+
+**What are you most proud of from this module?**
+I have now made my first open source contribution which is big in this new era of ATS scanners that check for things like that. I'm hoping to continue to get meaningful contributions that show my technical skills
